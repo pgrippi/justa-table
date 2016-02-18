@@ -154,7 +154,7 @@ export default Ember.Component.extend({
     },
 
     columnWidthChanged(/* column, newWidth */) {
-      // no-op
+      this.get('table')._recomputeStickyHeaders();
     }
   }
 });

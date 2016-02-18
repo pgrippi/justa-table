@@ -1,0 +1,66 @@
+<div class="fixed-height-table-container">
+  {{#justa-table content=model stickyHeader=true stickyHeaderScrollableArea='.fixed-height-table-container' as |table|}}
+    {{#fixed-table-columns table=table as |row|}}
+      {{table-column
+        row=row
+        width=150
+        headerName='Name'
+        resizable=true
+        valueBindingPath='displayName'}}
+
+      {{table-column
+        row=row
+        width=250
+        headerName='Company'
+        resizable=true
+        valueBindingPath='company'}}
+    {{/fixed-table-columns}}
+
+    {{#table-columns table=table as |row|}}
+
+      {{!--
+        NOTE: there is a limitation currently when using fixed columns.
+        you must specify a width for each standard column so that the browser doesn't autosize everything
+      --}}
+
+      {{table-column
+        row=row
+        width=550
+        headerName='Address'
+        resizable=true
+        valueBindingPath='address'}}
+
+      {{table-column
+        row=row
+        width=150
+        headerName='City'
+        resizable=true
+        valueBindingPath='city'}}
+
+      {{table-column
+        row=row
+        width=150
+        headerName='State'
+        resizable=true
+        valueBindingPath='state'}}
+
+      {{table-column
+        row=row
+        width=150
+        headerName='Zip'
+        resizable=true
+        valueBindingPath='zipCode'}}
+
+      {{#table-column
+        width=150
+        headerName='Be Careful?'
+        resizable=true
+        classNames=(if row.flagged 'danger-cell')}}
+
+        {{#if row.flagged}}
+          WARNING!
+        {{/if}}
+      {{/table-column}}
+    {{/table-columns}}
+  {{/justa-table}}
+</div>

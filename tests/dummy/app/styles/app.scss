@@ -41,3 +41,8 @@ $icon-font-path: '/assets/bootstrap/';
     content: '👉';
   }
 }
+
+.fixed-height-table-container {
+  height: 500px;
+  overflow: auto;
+}
