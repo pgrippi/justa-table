@@ -11,9 +11,12 @@ const {
   computed: { readOnly }
 } = Ember;
 
+let uuid = 0;
+
 export default Ember.Component.extend({
   layout,
   classNames: ['table-columns'],
+  classNameBindings: ['columnId'],
 
   /**
     The parent table component, it is expected to be passed in.
@@ -39,9 +42,25 @@ export default Ember.Component.extend({
   */
   rowGroupDataName: readOnly('table.rowGroupDataName'),
 
+  /**
+    Unique ID for the table-columns component
+    @private
+  */
+  columnId: computed(function columnId() {
+    return `justa-table-columns-${++uuid}`;
+  }),
+
+  /**
+    The stylesheet to attach css rules to. Only used for fixed height tables.
+    @private
+  */
+  stylesheet: null,
+
   init() {
     this._super(...arguments);
     this._allColumns = new A();
+
+    this.set('stylesheet', createStylesheet(this.get('columnId')));
   },
 
   /**
@@ -96,6 +115,7 @@ export default Ember.Component.extend({
     let columns = this.get('_allColumns');
     column.index = column.index || -1;
     columns.addObject(column);
+    Ember.run.debounce(this, this._computeCss, 350);
   },
 
   /**
@@ -107,16 +127,63 @@ export default Ember.Component.extend({
   unregisterColumn(column) {
     let allColumns = this.get('_allColumns');
     allColumns.removeObject(column);
+    Ember.run.debounce(this, this._computeCss, 350);
+  },
+
+  hasFixedHeight: computed('table.fixedHeight', function hasFixedHeight() {
+    let fixedHeight = this.get('table.fixedHeight');
+    return fixedHeight !== false && fixedHeight > 0;
+  }),
+
+  /**
+   * The fixed height style for the `<tbody>` element
+   * @private
+   */
+  tbodyStyle: computed('hasFixedHeight', 'columns.@each.width', function tbodyStyle() {
+    let hasFixedHeight = this.get('hasFixedHeight');
+    if (hasFixedHeight) {
+      let fixedHeight = this.get('table.fixedHeight');
+      let width = this.get('columns').reduce((a, b) => a + b.get('width'), 0);
+      return Ember.String.htmlSafe(`width:${width}px;height:${fixedHeight}px`);
+    }
+    return Ember.String.htmlSafe('');
+  }),
+
+  _computeCss() {
+    if (!this.get('hasFixedHeight')) {
+      return;
+    }
+
+    let columns = this.get('columns');
+    let columnId = this.get('columnId');
+    let { sheet } = this.get('stylesheet');
+
+    for (let i = 0; i < columns.length; ++i) {
+      let column = columns.objectAt(i);
+
+      sheet.insertRule(`.${columnId} td:nth-child(${i + 1}) { min-width: ${column.get('width')}px; max-width: ${column.get('width')}px; }`, i);
+    }
   },
 
   didInsertElement() {
+    this._super(...arguments);
+
     this.$().on('mouseenter', 'tr', this._onRowEnter.bind(this));
     this.$().on('mouseleave', 'tr', this._onRowLeave.bind(this));
   },
 
   willDestroyElement() {
+    this._super(...arguments);
+
     this.$().off('mouseenter', 'tr', this._onRowEnter.bind(this));
     this.$().off('mouseleave', 'tr', this._onRowLeave.bind(this));
+
+    let stylesheet = this.get('stylesheet');
+    if (stylesheet) {
+      document.head.removeChild(stylesheet);
+      this.set('stylesheet', null);
+      stylesheet = null;
+    }
   },
 
   _onRowEnter() {
@@ -153,7 +220,16 @@ export default Ember.Component.extend({
     },
 
     columnWidthChanged(/* column, newWidth */) {
+      console.debug('columnWidthChanged')
       // no-op
     }
   }
 });
+
+function createStylesheet(columnId) {
+  let stylesheet = document.createElement('style');
+  stylesheet.id = `styles-for-${columnId}`;
+  stylesheet.type = 'text/css';
+  document.head.appendChild(stylesheet);
+  return stylesheet;
+}

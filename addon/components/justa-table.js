@@ -12,7 +12,7 @@ const {
 export default Component.extend({
   layout,
   classNames: ['justa-table'],
-  classNameBindings: ['isLoading'],
+  classNameBindings: ['isLoading', 'fixedHeight:justa-fixed-height'],
 
   init() {
     this._super(...arguments);
@@ -28,6 +28,12 @@ export default Component.extend({
     @public
   */
   paginate: false,
+
+  /**
+    If the table should have a fixed height. Setting to an integer will set the height of the table to that.
+    @public
+  */
+  fixedHeight: false,
 
   /**
     Css classes to apply to table rows.
